@@ -33,17 +33,18 @@ contract XERC20Factory is IXERC20Factory {
    * @param _minterLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of bridges that you are adding (optional, can be an empty array)
+   * @param _initialSupply The initial supply of the token
    * @return _xerc20 The address of the xerc20
    */
-
   function deployXERC20(
     string memory _name,
     string memory _symbol,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
-    address[] memory _bridges
+    address[] memory _bridges,
+    uint256 _initialSupply
   ) external returns (address _xerc20) {
-    _xerc20 = _deployXERC20(_name, _symbol, _minterLimits, _burnerLimits, _bridges);
+    _xerc20 = _deployXERC20(_name, _symbol, _minterLimits, _burnerLimits, _bridges, _initialSupply);
 
     emit XERC20Deployed(_xerc20);
   }
@@ -57,7 +58,6 @@ contract XERC20Factory is IXERC20Factory {
    * @param _isNative Whether or not the base token is the native (gas) token of the chain. Eg: MATIC for polygon chain
    * @return _lockbox The address of the lockbox
    */
-
   function deployLockbox(
     address _xerc20,
     address _baseToken,
@@ -85,13 +85,13 @@ contract XERC20Factory is IXERC20Factory {
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
    * @return _xerc20 The address of the xerc20
    */
-
   function _deployXERC20(
     string memory _name,
     string memory _symbol,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
-    address[] memory _bridges
+    address[] memory _bridges,
+    uint256 _initialSupply
   ) internal returns (address _xerc20) {
     uint256 _bridgesLength = _bridges.length;
     if (_minterLimits.length != _bridgesLength || _burnerLimits.length != _bridgesLength) {
@@ -99,7 +99,7 @@ contract XERC20Factory is IXERC20Factory {
     }
     bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol, msg.sender));
     bytes memory _creation = type(XERC20).creationCode;
-    bytes memory _bytecode = abi.encodePacked(_creation, abi.encode(_name, _symbol, address(this)));
+    bytes memory _bytecode = abi.encodePacked(_creation, abi.encode(_name, _symbol, address(this), _initialSupply));
 
     _xerc20 = CREATE3.deploy(_salt, _bytecode, 0);
 
@@ -107,6 +107,10 @@ contract XERC20Factory is IXERC20Factory {
 
     for (uint256 _i; _i < _bridgesLength; ++_i) {
       XERC20(_xerc20).setLimits(_bridges[_i], _minterLimits[_i], _burnerLimits[_i]);
+    }
+
+    if (_initialSupply > 0) {
+      XERC20(_xerc20).transfer(msg.sender, _initialSupply);
     }
 
     XERC20(_xerc20).transferOwnership(msg.sender);

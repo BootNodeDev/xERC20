@@ -33,9 +33,21 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _name The name of the token
    * @param _symbol The symbol of the token
    * @param _factory The factory which deployed this contract
+   * @param _factory The factory which deployed this contract
+   * @param _initialSupply The initial supply of the token
    */
-  constructor(string memory _name, string memory _symbol, address _factory) ERC20(_name, _symbol) ERC20Permit(_name) {
+  constructor(
+    string memory _name,
+    string memory _symbol,
+    address _factory,
+    uint256 _initialSupply
+  ) ERC20(_name, _symbol) ERC20Permit(_name) {
     _transferOwnership(_factory);
+
+    if (_initialSupply > 0) {
+      _mint(_factory, _initialSupply);
+    }
+
     FACTORY = _factory;
   }
 

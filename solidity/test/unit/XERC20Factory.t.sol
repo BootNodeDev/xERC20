@@ -30,12 +30,15 @@ abstract contract Base is DSTestFull {
 }
 
 contract UnitDeploy is Base {
-  function testDeployment() public {
+  function testDeployment(uint256 _initialSupply) public {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
 
-    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    vm.prank(_owner);
+    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, _initialSupply);
     assertEq(XERC20(_xerc20).name(), 'Test');
+    assertEq(XERC20(_xerc20).owner(), _owner);
+    assertEq(XERC20(_xerc20).balanceOf(_owner), _initialSupply);
   }
 
   function testRevertsWhenAddressIsTaken() public {
@@ -43,11 +46,11 @@ contract UnitDeploy is Base {
     address[] memory _minters = new address[](0);
 
     vm.prank(_owner);
-    _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
 
     vm.prank(_owner);
     vm.expectRevert('DEPLOYMENT_FAILED');
-    _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
   }
 
   function testComputedAddress() public {
@@ -57,7 +60,7 @@ contract UnitDeploy is Base {
     vm.startPrank(address(_owner));
     bytes32 _salt = keccak256(abi.encodePacked('Test', 'TST', _owner));
 
-    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
     vm.stopPrank();
     address _predictedAddress = _xerc20Factory.getDeployed(_salt);
 
@@ -69,7 +72,7 @@ contract UnitDeploy is Base {
     address[] memory _minters = new address[](0);
 
     vm.startPrank(_owner);
-    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
     address payable _lockbox = payable(_xerc20Factory.deployLockbox(_xerc20, _erc20, false));
     vm.stopPrank();
 
@@ -84,7 +87,7 @@ contract UnitDeploy is Base {
     address[] memory _minters = new address[](0);
 
     vm.startPrank(_owner);
-    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
 
     address payable _lockbox = payable(_xerc20Factory.deployLockbox(_xerc20, _erc20, false));
     vm.stopPrank();
@@ -98,7 +101,7 @@ contract UnitDeploy is Base {
     address[] memory _minters = new address[](0);
 
     vm.startPrank(_owner);
-    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
     vm.stopPrank();
 
     vm.expectRevert(IXERC20Factory.IXERC20Factory_NotOwner.selector);
@@ -119,7 +122,7 @@ contract UnitDeploy is Base {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
 
-    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
 
     _xerc20Factory.deployLockbox(_xerc20, _erc20, false);
 
@@ -138,10 +141,10 @@ contract UnitDeploy is Base {
 
     vm.prank(_owner);
     vm.expectRevert(IXERC20Factory.IXERC20Factory_InvalidLength.selector);
-    _xerc20Factory.deployXERC20('Test', 'TST', _minterLimits, _empty, _minters);
+    _xerc20Factory.deployXERC20('Test', 'TST', _minterLimits, _empty, _minters, 0);
 
     vm.expectRevert(IXERC20Factory.IXERC20Factory_InvalidLength.selector);
-    _xerc20Factory.deployXERC20('Test', 'TST', _empty, _burnerLimits, _minters);
+    _xerc20Factory.deployXERC20('Test', 'TST', _empty, _burnerLimits, _minters, 0);
   }
 
   function testDeployEmitsEvent() public {
@@ -152,14 +155,14 @@ contract UnitDeploy is Base {
     vm.expectEmit(true, true, true, true);
     emit XERC20Deployed(_token);
     vm.prank(_owner);
-    _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
   }
 
   function testLockboxEmitsEvent() public {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
     vm.prank(_owner);
-    address _token = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters);
+    address _token = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0);
     address payable _lockbox = payable(_xerc20Factory.getDeployed(keccak256(abi.encodePacked(_token, _erc20, _owner))));
 
     vm.expectEmit(true, true, true, true);

@@ -20,8 +20,18 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', _owner);
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
     vm.stopPrank();
+  }
+}
+
+contract UnitDeploy is Base {
+  function testDeployment(uint256 _initialSupply) public {
+    _xerc20 = new XERC20('Test', 'TST', _owner, _initialSupply);
+    assertEq(XERC20(_xerc20).name(), 'Test');
+    assertEq(XERC20(_xerc20).symbol(), 'TST');
+    assertEq(XERC20(_xerc20).owner(), _owner);
+    assertEq(XERC20(_xerc20).balanceOf(_owner), _initialSupply);
   }
 }
 
