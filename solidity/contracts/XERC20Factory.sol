@@ -83,6 +83,7 @@ contract XERC20Factory is IXERC20Factory {
    * @param _minterLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
+   * @param _initialSupply The initial supply of the token
    * @return _xerc20 The address of the xerc20
    */
   function _deployXERC20(
