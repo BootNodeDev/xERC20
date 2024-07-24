@@ -34,6 +34,11 @@ interface IXERC20 {
   error IXERC20_LimitsTooHigh();
 
   /**
+   * @notice Reverts when a the length of arrays sent is incorrect
+   */
+  error IXERC20_InvalidLength();
+
+  /**
    * @notice Contains the full minting and burning data for a particular bridge
    *
    * @param minterParams The minting parameters for the bridge
