@@ -45,6 +45,7 @@ interface IXERC20Factory {
    * @param _burnerLimits The array of burning limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
    * @param _initialSupply The initial supply of the token
+   * @param _owner The owner of the token, zero address if the owner is the sender
    * @return _xerc20 The address of the xerc20
    */
   function deployXERC20(
@@ -53,7 +54,8 @@ interface IXERC20Factory {
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges,
-    uint256 _initialSupply
+    uint256 _initialSupply,
+    address _owner
   ) external returns (address _xerc20);
 
   /**
