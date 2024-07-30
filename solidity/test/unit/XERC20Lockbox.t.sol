@@ -9,6 +9,24 @@ import {XERC20Lockbox} from '../../contracts/XERC20Lockbox.sol';
 import {IXERC20Lockbox} from '../../interfaces/IXERC20Lockbox.sol';
 import {IXERC20} from '../../interfaces/IXERC20.sol';
 
+contract MockERC20NoDecimals {}
+
+contract MockERC206Decimals is ERC20 {
+  constructor() ERC20('MockERC206Decimals', 'ERC206') {}
+
+  function decimals() public pure override returns (uint8) {
+    return 6;
+  }
+}
+
+contract MockERC2020Decimals is ERC20 {
+  constructor() ERC20('MockERC2020Decimals', 'ERC2020') {}
+
+  function decimals() public pure override returns (uint8) {
+    return 20;
+  }
+}
+
 abstract contract Base is Test {
   address internal _owner = vm.addr(1);
   uint256 internal _userPrivateKey = 0x1234;
@@ -25,10 +43,43 @@ abstract contract Base is Test {
   XERC20Lockbox internal _nativeLockbox;
 
   function setUp() public virtual {
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+
     vm.startPrank(_owner);
     _nativeLockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), true);
     _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
     vm.stopPrank();
+  }
+}
+
+contract UnitDecimals is Base {
+  function test_constructor_MaxDecimals() public {
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(uint8(36) + 1));
+
+    vm.expectRevert(IXERC20Lockbox.IXERC20Lockbox_MaxDecimals.selector);
+    new XERC20Lockbox(address(_xerc20), address(_erc20), false);
+  }
+
+  function test_constructor_erc20Decimals_native() public {
+    assertEq(_nativeLockbox.erc20Decimals(), 0);
+  }
+
+  function test_constructor_erc20Decimals_not_native_with_decimals(uint8 _erc20Decimals) public {
+    vm.assume(_erc20Decimals <= uint8(36));
+
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(_erc20Decimals));
+
+    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
+
+    assertEq(_lockbox.erc20Decimals(), _erc20Decimals);
+  }
+
+  function test_constructor_erc20Decimals_not_native_no_decimals() public {
+    MockERC20NoDecimals erc20NoDecimals = new MockERC20NoDecimals();
+
+    _lockbox = new XERC20Lockbox(address(_xerc20), address(erc20NoDecimals), false);
+
+    assertEq(_lockbox.erc20Decimals(), 0);
   }
 }
 
@@ -37,7 +88,7 @@ contract UnitDeposit is Base {
     vm.assume(_amount > 0);
     vm.mockCall(
       address(_erc20),
-      abi.encodeWithSelector(IERC20.transferFrom.selector, _owner, address(_lockbox), _amount),
+      abi.encodeWithSelector(ERC20.transferFrom.selector, _owner, address(_lockbox), _amount),
       abi.encode(true)
     );
     vm.mockCall(address(_xerc20), abi.encodeWithSelector(IXERC20.mint.selector, _owner, _amount), abi.encode(true));
@@ -144,6 +195,105 @@ contract UnitDeposit is Base {
   }
 }
 
+contract UnitDepositLessDecimals is Base {
+  uint256 decimalNormalizer = 10 ** 12;
+
+  function setUp() public virtual override {
+    _erc20 = IERC20(address(new MockERC206Decimals()));
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
+
+    vm.startPrank(_owner);
+    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
+    _xerc20.setLockbox(address(_lockbox));
+    vm.stopPrank();
+  }
+
+  function testDeposit(uint256 _amount) public {
+    vm.assume(_amount < type(uint192).max);
+    uint256 _amountNormalized = _amount * decimalNormalizer;
+
+    deal(address(_erc20), _user, _amount);
+
+    vm.startPrank(_user);
+    _erc20.approve(address(_lockbox), _amount);
+    _lockbox.deposit(_amount);
+    vm.stopPrank();
+
+    assertEq(_xerc20.balanceOf(_user), _amountNormalized);
+    assertEq(_erc20.balanceOf(_user), 0);
+  }
+
+  function testDepositTo(uint256 _amount) public {
+    vm.assume(_amount < type(uint192).max);
+    uint256 _amountNormalized = _amount * decimalNormalizer;
+
+    deal(address(_erc20), _user, _amount);
+
+    vm.startPrank(_user);
+    _erc20.approve(address(_lockbox), _amount);
+    _lockbox.depositTo(_owner, _amount);
+    vm.stopPrank();
+
+    assertEq(_xerc20.balanceOf(_owner), _amountNormalized);
+    assertEq(_erc20.balanceOf(_user), 0);
+  }
+
+  function testDepositRevertsAmountTooLarge() public {
+    uint256 bigAmount = uint256(type(uint192).max) + 1;
+    deal(address(_erc20), _user, bigAmount);
+
+    vm.startPrank(_user);
+    _erc20.approve(address(_lockbox), bigAmount);
+    vm.expectRevert(IXERC20Lockbox.IXERC20Lockbox_AmountTooLarge.selector);
+    _lockbox.depositTo(_owner, bigAmount);
+    vm.stopPrank();
+  }
+}
+
+contract UnitDepositMoreDecimals is Base {
+  uint256 decimalNormalizer = 10 ** 2;
+
+  function setUp() public virtual override {
+    _erc20 = IERC20(address(new MockERC2020Decimals()));
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
+
+    vm.startPrank(_owner);
+    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
+    _xerc20.setLockbox(address(_lockbox));
+    vm.stopPrank();
+  }
+
+  function testDeposit(uint256 _amount) public {
+    vm.assume(_amount < type(uint192).max);
+    uint256 _amountNormalized = _amount / decimalNormalizer;
+
+    deal(address(_erc20), _user, _amount);
+
+    vm.startPrank(_user);
+    _erc20.approve(address(_lockbox), _amount);
+    _lockbox.deposit(_amount);
+    vm.stopPrank();
+
+    assertEq(_xerc20.balanceOf(_user), _amountNormalized);
+    assertEq(_erc20.balanceOf(_user), 0);
+  }
+
+  function testDepositTo(uint256 _amount) public {
+    vm.assume(_amount < type(uint192).max);
+    uint256 _amountNormalized = _amount / decimalNormalizer;
+
+    deal(address(_erc20), _user, _amount);
+
+    vm.startPrank(_user);
+    _erc20.approve(address(_lockbox), _amount);
+    _lockbox.depositTo(_owner, _amount);
+    vm.stopPrank();
+
+    assertEq(_xerc20.balanceOf(_owner), _amountNormalized);
+    assertEq(_erc20.balanceOf(_user), 0);
+  }
+}
+
 contract UnitWithdraw is Base {
   function testWithdraw(uint256 _amount) public {
     vm.assume(_amount > 0);
@@ -191,5 +341,79 @@ contract UnitWithdraw is Base {
     vm.stopPrank();
 
     assertEq(_user.balance, _amount);
+  }
+}
+
+contract UnitWithdrawLessDecimals is Base {
+  uint256 decimalNormalizer = 10 ** 12;
+
+  function setUp() public virtual override {
+    _erc20 = IERC20(address(new MockERC206Decimals()));
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
+
+    deal(address(_erc20), _owner, type(uint192).max);
+
+    vm.startPrank(_owner);
+    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
+    _xerc20.setLockbox(address(_lockbox));
+    _erc20.approve(address(_lockbox), type(uint192).max);
+    _lockbox.deposit(type(uint192).max);
+    vm.stopPrank();
+  }
+
+  function testWithdraw(uint256 _amount) public {
+    vm.assume(_amount < type(uint192).max);
+    uint256 amountNormalized = _amount / decimalNormalizer;
+
+    vm.prank(_owner);
+    _xerc20.transfer(_user, _amount);
+
+    uint256 xer20BlanceBefore = _xerc20.balanceOf(_user);
+    uint256 er20BlanceBefore = _erc20.balanceOf(_user);
+
+    vm.startPrank(_user);
+    _xerc20.approve(address(_lockbox), _amount);
+    _lockbox.withdraw(_amount);
+    vm.stopPrank();
+
+    assertEq(_xerc20.balanceOf(_user), xer20BlanceBefore - _amount);
+    assertEq(_erc20.balanceOf(_user), er20BlanceBefore + amountNormalized);
+  }
+}
+
+contract UnitWithdrawMoreDecimals is Base {
+  uint256 decimalNormalizer = 10 ** 2;
+
+  function setUp() public virtual override {
+    _erc20 = IERC20(address(new MockERC2020Decimals()));
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
+
+    deal(address(_erc20), _owner, type(uint256).max);
+
+    vm.startPrank(_owner);
+    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
+    _xerc20.setLockbox(address(_lockbox));
+    _erc20.approve(address(_lockbox), type(uint256).max);
+    _lockbox.deposit(type(uint256).max);
+    vm.stopPrank();
+  }
+
+  function testWithdraw(uint256 _amount) public {
+    vm.assume(_amount < type(uint192).max);
+    uint256 amountNormalized = _amount * decimalNormalizer;
+
+    vm.prank(_owner);
+    _xerc20.transfer(_user, _amount);
+
+    uint256 xer20BlanceBefore = _xerc20.balanceOf(_user);
+    uint256 er20BlanceBefore = _erc20.balanceOf(_user);
+
+    vm.startPrank(_user);
+    _xerc20.approve(address(_lockbox), _amount);
+    _lockbox.withdraw(_amount);
+    vm.stopPrank();
+
+    assertEq(_xerc20.balanceOf(_user), xer20BlanceBefore - _amount);
+    assertEq(_erc20.balanceOf(_user), er20BlanceBefore + amountNormalized);
   }
 }

@@ -7,6 +7,7 @@ import {XERC20Factory} from '../../contracts/XERC20Factory.sol';
 import {XERC20Lockbox} from '../../contracts/XERC20Lockbox.sol';
 import {IXERC20Factory} from '../../interfaces/IXERC20Factory.sol';
 import {CREATE3} from 'isolmate/utils/CREATE3.sol';
+import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
 contract XERC20FactoryForTest is XERC20Factory {
   function getDeployed(bytes32 _salt) public view returns (address _precomputedAddress) {
@@ -84,6 +85,8 @@ contract UnitDeploy is Base {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
 
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+
     vm.startPrank(_owner);
     address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0, address(0));
     address payable _lockbox = payable(_xerc20Factory.deployLockbox(_xerc20, _erc20, false));
@@ -98,6 +101,8 @@ contract UnitDeploy is Base {
   function testLockboxSingleDeployment() public {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
+
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
 
     vm.startPrank(_owner);
     address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0, address(0));
@@ -117,16 +122,22 @@ contract UnitDeploy is Base {
     address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0, address(0));
     vm.stopPrank();
 
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+
     vm.expectRevert(IXERC20Factory.IXERC20Factory_NotOwner.selector);
     _xerc20Factory.deployLockbox(_xerc20, _erc20, false);
   }
 
   function testLockboxDeploymentRevertsIfMaliciousAddress() public {
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+
     vm.expectRevert(IXERC20Factory.IXERC20Factory_BadTokenAddress.selector);
     _xerc20Factory.deployLockbox(_erc20, address(0), false);
   }
 
   function testLockboxDeploymentRevertsIfInvalidParameters() public {
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+
     vm.expectRevert(IXERC20Factory.IXERC20Factory_BadTokenAddress.selector);
     _xerc20Factory.deployLockbox(_erc20, address(100), true);
   }
@@ -134,6 +145,8 @@ contract UnitDeploy is Base {
   function testCantDeployLockboxTwice() public {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
+
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
 
     address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0, address(0));
 
@@ -177,6 +190,8 @@ contract UnitDeploy is Base {
     vm.prank(_owner);
     address _token = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0, address(0));
     address payable _lockbox = payable(_xerc20Factory.getDeployed(keccak256(abi.encodePacked(_token, _erc20, _owner))));
+
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
 
     vm.expectEmit(true, true, true, true);
     emit LockboxDeployed(_lockbox);
