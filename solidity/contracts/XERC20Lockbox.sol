@@ -165,10 +165,8 @@ contract XERC20Lockbox is IXERC20Lockbox {
 
       // If ERC20 token uses number of decimals other than 18 then the amount should be normalized to 18.
       // Make sure that normalized amount will not overflow uint256
-      if (erc20Decimals < 18) {
-        if (_amount > MAX_UPSCALE_AMOUNT) {
-          revert IXERC20Lockbox_AmountTooLarge();
-        }
+      if (erc20Decimals < 18 && _amount > MAX_UPSCALE_AMOUNT) {
+        revert IXERC20Lockbox_AmountTooLarge();
       }
 
       normalizedAmount = _normalizeAmount(_amount, erc20Decimals, 18);

@@ -368,16 +368,16 @@ contract UnitWithdrawLessDecimals is Base {
     vm.prank(_owner);
     _xerc20.transfer(_user, _amount);
 
-    uint256 xer20BlanceBefore = _xerc20.balanceOf(_user);
-    uint256 er20BlanceBefore = _erc20.balanceOf(_user);
+    uint256 xer20BalanceBefore = _xerc20.balanceOf(_user);
+    uint256 er20BalanceBefore = _erc20.balanceOf(_user);
 
     vm.startPrank(_user);
     _xerc20.approve(address(_lockbox), _amount);
     _lockbox.withdraw(_amount);
     vm.stopPrank();
 
-    assertEq(_xerc20.balanceOf(_user), xer20BlanceBefore - _amount);
-    assertEq(_erc20.balanceOf(_user), er20BlanceBefore + amountNormalized);
+    assertEq(_xerc20.balanceOf(_user), xer20BalanceBefore - _amount);
+    assertEq(_erc20.balanceOf(_user), er20BalanceBefore + amountNormalized);
   }
 }
 
@@ -405,15 +405,15 @@ contract UnitWithdrawMoreDecimals is Base {
     vm.prank(_owner);
     _xerc20.transfer(_user, _amount);
 
-    uint256 xer20BlanceBefore = _xerc20.balanceOf(_user);
-    uint256 er20BlanceBefore = _erc20.balanceOf(_user);
+    uint256 xer20BalanceBefore = _xerc20.balanceOf(_user);
+    uint256 er20BalanceBefore = _erc20.balanceOf(_user);
 
     vm.startPrank(_user);
     _xerc20.approve(address(_lockbox), _amount);
     _lockbox.withdraw(_amount);
     vm.stopPrank();
 
-    assertEq(_xerc20.balanceOf(_user), xer20BlanceBefore - _amount);
-    assertEq(_erc20.balanceOf(_user), er20BlanceBefore + amountNormalized);
+    assertEq(_xerc20.balanceOf(_user), xer20BalanceBefore - _amount);
+    assertEq(_erc20.balanceOf(_user), er20BalanceBefore + amountNormalized);
   }
 }
