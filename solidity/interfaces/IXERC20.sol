@@ -34,7 +34,7 @@ interface IXERC20 {
   error IXERC20_LimitsTooHigh();
 
   /**
-   * @notice Reverts when a the length of arrays sent is incorrect
+   * @notice Reverts when the length of arrays sent is incorrect
    */
   error IXERC20_InvalidLength();
 

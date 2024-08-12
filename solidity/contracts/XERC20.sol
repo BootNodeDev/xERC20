@@ -90,7 +90,7 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   /**
    * @notice Updates the limits of any bridge
    * @dev Can only be called by the owner
-   * @param _bridge The address of the bridge we are setting the limits too
+   * @param _bridge The address of the bridge we are setting the limits to
    * @param _mintingLimit The updated minting limit we are setting to the bridge
    * @param _burningLimit The updated burning limit we are setting to the bridge
    */
@@ -101,7 +101,7 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   /**
    * @notice Updates the limits of many bridges
    * @dev Can only be called by the owner
-   * @param _bridges The address of the bridge we are setting the limits too
+   * @param _bridges The address of the bridge we are setting the limits to
    * @param _mintingLimits The updated minting limit we are setting to the bridge
    * @param _burningLimits The updated burning limit we are setting to the bridge
    */
