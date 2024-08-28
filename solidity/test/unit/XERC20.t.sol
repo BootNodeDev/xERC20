@@ -20,8 +20,18 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', _owner);
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
     vm.stopPrank();
+  }
+}
+
+contract UnitDeploy is Base {
+  function testDeployment(uint256 _initialSupply) public {
+    _xerc20 = new XERC20('Test', 'TST', _owner, _initialSupply);
+    assertEq(XERC20(_xerc20).name(), 'Test');
+    assertEq(XERC20(_xerc20).symbol(), 'TST');
+    assertEq(XERC20(_xerc20).owner(), _owner);
+    assertEq(XERC20(_xerc20).balanceOf(_owner), _initialSupply);
   }
 }
 
@@ -138,6 +148,47 @@ contract UnitCreateParams is Base {
     vm.stopPrank();
     assertEq(_xerc20.mintingMaxLimitOf(_randomAddr), _amount);
     assertEq(_xerc20.burningMaxLimitOf(_randomAddr), _amount);
+  }
+
+  function testChangeLimitsBatch_IXERC20_InvalidLength() public {
+    address[] memory bridges = new address[](1);
+    uint256[] memory mintLimits = new uint256[](2);
+    uint256[] memory mintLimits1 = new uint256[](1);
+    uint256[] memory burnLimits = new uint256[](3);
+
+    vm.startPrank(_owner);
+    vm.expectRevert(IXERC20.IXERC20_InvalidLength.selector);
+    _xerc20.setLimitsBatch(bridges, mintLimits, burnLimits);
+
+    vm.expectRevert(IXERC20.IXERC20_InvalidLength.selector);
+    _xerc20.setLimitsBatch(bridges, mintLimits1, burnLimits);
+    vm.stopPrank();
+  }
+
+  function testChangeLimitsBatch(uint256[5] memory _mintLimits, uint256[5] memory _burnLimits) public {
+    for (uint256 i = 0; i < 5; i++) {
+      _mintLimits[i] = bound(_mintLimits[i], 1, 1e40);
+      _burnLimits[i] = bound(_burnLimits[i], 1, 1e40);
+    }
+
+    uint256[] memory mintLimits = new uint256[](5);
+    uint256[] memory burnLimits = new uint256[](5);
+    address[] memory bridges = new address[](5);
+
+    for (uint256 i = 0; i < 5; i++) {
+      mintLimits[i] = _mintLimits[i];
+      burnLimits[i] = _burnLimits[i];
+      bridges[i] = vm.addr(100 + i); // need this to avoid duplicate address
+    }
+
+    vm.startPrank(_owner);
+    _xerc20.setLimitsBatch(bridges, mintLimits, burnLimits);
+    vm.stopPrank();
+
+    for (uint256 i = 0; i < 5; i++) {
+      assertEq(_xerc20.mintingMaxLimitOf(bridges[i]), _mintLimits[i]);
+      assertEq(_xerc20.burningMaxLimitOf(bridges[i]), _burnLimits[i]);
+    }
   }
 
   function testRevertsWithWrongCaller() public {
