@@ -69,7 +69,8 @@ contract XERC20Deploy is Script, ScriptingLibrary {
       }
 
       // deploy xerc20
-      address _xerc20 = factory.deployXERC20(_data.name, _data.symbol, _mintLimits, _burnLimits, _bridges);
+      address _xerc20 =
+        factory.deployXERC20(_data.name, _data.symbol, _mintLimits, _burnLimits, _bridges, 0, address(0));
 
       // deploy lockbox if needed
       address _lockbox;
