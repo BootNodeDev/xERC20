@@ -34,6 +34,7 @@ contract XERC20Factory is IXERC20Factory {
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of bridges that you are adding (optional, can be an empty array)
    * @param _initialSupply The initial supply of the token
+   * @param _owner The owner of the token, zero address if the owner is the sender
    * @return _xerc20 The address of the xerc20
    */
   function deployXERC20(
@@ -42,9 +43,10 @@ contract XERC20Factory is IXERC20Factory {
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges,
-    uint256 _initialSupply
+    uint256 _initialSupply,
+    address _owner
   ) external returns (address _xerc20) {
-    _xerc20 = _deployXERC20(_name, _symbol, _minterLimits, _burnerLimits, _bridges, _initialSupply);
+    _xerc20 = _deployXERC20(_name, _symbol, _minterLimits, _burnerLimits, _bridges, _initialSupply, _owner);
 
     emit XERC20Deployed(_xerc20);
   }
@@ -84,6 +86,7 @@ contract XERC20Factory is IXERC20Factory {
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
    * @param _initialSupply The initial supply of the token
+   * @param _owner The owner of the token, zero address if the owner is the sender
    * @return _xerc20 The address of the xerc20
    */
   function _deployXERC20(
@@ -92,7 +95,8 @@ contract XERC20Factory is IXERC20Factory {
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges,
-    uint256 _initialSupply
+    uint256 _initialSupply,
+    address _owner
   ) internal returns (address _xerc20) {
     uint256 _bridgesLength = _bridges.length;
     if (_minterLimits.length != _bridgesLength || _burnerLimits.length != _bridgesLength) {
@@ -114,7 +118,7 @@ contract XERC20Factory is IXERC20Factory {
       XERC20(_xerc20).transfer(msg.sender, _initialSupply);
     }
 
-    XERC20(_xerc20).transferOwnership(msg.sender);
+    XERC20(_xerc20).transferOwnership(_owner != address(0) ? _owner : msg.sender);
   }
 
   /**
