@@ -34,6 +34,16 @@ interface IXERC20Lockbox {
   error IXERC20Lockbox_WithdrawFailed();
 
   /**
+   * @notice Reverts when a ERC20 has too many decimals
+   */
+  error IXERC20Lockbox_MaxDecimals();
+
+  /**
+   * @notice Reverts when the amount is too large for normalizing
+   */
+  error IXERC20Lockbox_AmountTooLarge();
+
+  /**
    * @notice Deposit ERC20 tokens into the lockbox
    *
    * @param _amount The amount of tokens to deposit
