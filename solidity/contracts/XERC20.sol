@@ -35,15 +35,23 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _factory The factory which deployed this contract
    * @param _initialSupply The initial supply of the token
    * @param _receiver The initial supply receiver
+   * @param _owner The owner of the token, zero address if the owner is the sender
+   * @param _bridges The address of the bridge we are setting the limits to
+   * @param _mintingLimits The updated minting limit we are setting to the bridge
+   * @param _burningLimits The updated burning limit we are setting to the bridge
    */
   constructor(
     string memory _name,
     string memory _symbol,
     address _factory,
     uint256 _initialSupply,
-    address _receiver
+    address _receiver,
+    address _owner,
+    address[] memory _bridges,
+    uint256[] memory _mintingLimits,
+    uint256[] memory _burningLimits
   ) ERC20(_name, _symbol) ERC20Permit(_name) {
-    _transferOwnership(_factory);
+    _transferOwnership(_owner == address(0) ? msg.sender : _owner);
 
     if (_initialSupply > 0) {
       if (_receiver == address(0)) {
@@ -51,6 +59,10 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
       }
 
       _mint(_receiver, _initialSupply);
+    }
+
+    if (_bridges.length > 0) {
+      _setLimitsBatch(_bridges, _mintingLimits, _burningLimits);
     }
 
     FACTORY = _factory;
@@ -117,12 +129,7 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
     uint256[] memory _mintingLimits,
     uint256[] memory _burningLimits
   ) external onlyOwner {
-    if (_bridges.length != _mintingLimits.length || _bridges.length != _burningLimits.length) {
-      revert IXERC20_InvalidLength();
-    }
-    for (uint256 _i = 0; _i < _bridges.length; _i++) {
-      _setLimits(_bridges[_i], _mintingLimits[_i], _burningLimits[_i]);
-    }
+    _setLimitsBatch(_bridges, _mintingLimits, _burningLimits);
   }
 
   /**
@@ -197,6 +204,26 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
     _changeMinterLimit(_bridge, _mintingLimit);
     _changeBurnerLimit(_bridge, _burningLimit);
     emit BridgeLimitsSet(_mintingLimit, _burningLimit, _bridge);
+  }
+
+  /**
+   * @notice Updates the limits of many bridges
+   * @dev Can only be called by the owner
+   * @param _bridges The address of the bridge we are setting the limits to
+   * @param _mintingLimits The updated minting limit we are setting to the bridge
+   * @param _burningLimits The updated burning limit we are setting to the bridge
+   */
+  function _setLimitsBatch(
+    address[] memory _bridges,
+    uint256[] memory _mintingLimits,
+    uint256[] memory _burningLimits
+  ) internal {
+    if (_bridges.length != _mintingLimits.length || _bridges.length != _burningLimits.length) {
+      revert IXERC20_InvalidLength();
+    }
+    for (uint256 _i = 0; _i < _bridges.length; _i++) {
+      _setLimits(_bridges[_i], _mintingLimits[_i], _burningLimits[_i]);
+    }
   }
 
   /**

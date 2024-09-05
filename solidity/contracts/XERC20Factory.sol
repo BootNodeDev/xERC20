@@ -111,20 +111,20 @@ contract XERC20Factory is IXERC20Factory {
       _receiver = msg.sender;
     }
 
+    _owner = _owner != address(0) ? _owner : msg.sender;
+
     bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol, msg.sender));
     bytes memory _creation = type(XERC20).creationCode;
-    bytes memory _bytecode =
-      abi.encodePacked(_creation, abi.encode(_name, _symbol, address(this), _initialSupply, _receiver));
+    bytes memory _bytecode = abi.encodePacked(
+      _creation,
+      abi.encode(
+        _name, _symbol, address(this), _initialSupply, _receiver, _owner, _bridges, _minterLimits, _burnerLimits
+      )
+    );
 
     _xerc20 = CREATE3.deploy(_salt, _bytecode, 0);
 
     EnumerableSet.add(_xerc20RegistryArray, _xerc20);
-
-    for (uint256 _i; _i < _bridgesLength; ++_i) {
-      XERC20(_xerc20).setLimits(_bridges[_i], _minterLimits[_i], _burnerLimits[_i]);
-    }
-
-    XERC20(_xerc20).transferOwnership(_owner != address(0) ? _owner : msg.sender);
   }
 
   /**
