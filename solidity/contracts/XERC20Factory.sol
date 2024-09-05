@@ -6,6 +6,7 @@ import {IXERC20Factory} from '../interfaces/IXERC20Factory.sol';
 import {XERC20Lockbox} from '../contracts/XERC20Lockbox.sol';
 import {CREATE3} from 'isolmate/utils/CREATE3.sol';
 import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
 contract XERC20Factory is IXERC20Factory {
   using EnumerableSet for EnumerableSet.AddressSet;
@@ -74,6 +75,15 @@ contract XERC20Factory is IXERC20Factory {
     if ((_baseToken == address(0) && !_isNative) || (_isNative && _baseToken != address(0))) {
       revert IXERC20Factory_BadTokenAddress();
     }
+
+    uint8 baseTokenDecimals;
+    try IERC20Metadata(_baseToken).decimals() returns (uint8 decimals) {
+      baseTokenDecimals = decimals;
+    } catch {
+      baseTokenDecimals = 0;
+    }
+
+    if (baseTokenDecimals > XERC20(_xerc20).decimals()) revert IXERC20Factory_IncompatibleDecimals();
 
     if (XERC20(_xerc20).owner() != msg.sender) revert IXERC20Factory_NotOwner();
     if (_lockboxRegistry[_xerc20] != address(0)) revert IXERC20Factory_LockboxAlreadyDeployed();

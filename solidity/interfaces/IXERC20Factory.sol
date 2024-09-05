@@ -37,6 +37,11 @@ interface IXERC20Factory {
   error IXERC20Factory_InvalidLength();
 
   /**
+   * @notice Reverts when a the decimals of the base token are different from the XERC20 when deploying a lockbox
+   */
+  error IXERC20Factory_IncompatibleDecimals();
+
+  /**
    * @notice Deploys an XERC20 contract using CREATE3
    * @dev _limits and _minters must be the same length
    * @param _name The name of the token

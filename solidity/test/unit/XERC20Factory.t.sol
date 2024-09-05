@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.4 <0.9.0;
 
-import {DSTestFull} from '../../test/utils/DSTestFull.sol';
+import {Test} from 'forge-std/Test.sol';
 import {XERC20} from '../../contracts/XERC20.sol';
 import {XERC20Factory} from '../../contracts/XERC20Factory.sol';
 import {XERC20Lockbox} from '../../contracts/XERC20Lockbox.sol';
@@ -17,11 +17,12 @@ contract XERC20FactoryForTest is XERC20Factory {
   }
 }
 
-abstract contract Base is DSTestFull {
+abstract contract Base is Test {
   address internal _owner = vm.addr(1);
   address internal _user = vm.addr(2);
   address internal _erc20 = vm.addr(3);
   address internal _receiver = vm.addr(4);
+  address internal _xerc20 = vm.addr(4);
 
   XERC20FactoryForTest internal _xerc20Factory;
 
@@ -158,17 +159,27 @@ contract UnitDeploy is Base {
   }
 
   function testLockboxDeploymentRevertsIfMaliciousAddress() public {
-    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+    vm.mockCall(address(_xerc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(6));
 
     vm.expectRevert(IXERC20Factory.IXERC20Factory_BadTokenAddress.selector);
     _xerc20Factory.deployLockbox(_erc20, address(0), false);
   }
 
+  function testLockboxDeploymentRevertsIncompatibleDecimals() public {
+    vm.mockCall(address(_xerc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(6));
+
+    vm.expectRevert(IXERC20Factory.IXERC20Factory_IncompatibleDecimals.selector);
+    _xerc20Factory.deployLockbox(_erc20, _xerc20, false);
+  }
+
   function testLockboxDeploymentRevertsIfInvalidParameters() public {
-    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+    vm.mockCall(address(_xerc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
+    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(6));
 
     vm.expectRevert(IXERC20Factory.IXERC20Factory_BadTokenAddress.selector);
-    _xerc20Factory.deployLockbox(_erc20, address(100), true);
+    _xerc20Factory.deployLockbox(_erc20, _xerc20, true);
   }
 
   function testCantDeployLockboxTwice() public {
