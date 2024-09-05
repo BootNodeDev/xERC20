@@ -88,7 +88,7 @@ contract XERC20Factory is IXERC20Factory {
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
    * @param _initialSupply The initial supply of the token
-   * @param _receiver The initial supply receiver
+   * @param _receiver The initial supply receiver, zero address if the receiver is the sender
    * @param _owner The owner of the token, zero address if the owner is the sender
    * @return _xerc20 The address of the xerc20
    */
