@@ -28,10 +28,16 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   mapping(address => Bridge) public bridges;
 
   /**
+   * @dev The number of decimals used to get its user representation.
+   */
+  uint8 private immutable DECIMALS;
+
+  /**
    * @notice Constructs the initial config of the XERC20
    *
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _decimals The number of decimals used to get its user representation
    * @param _factory The factory which deployed this contract
    * @param _initialSupply The initial supply of the token
    * @param _receiver The initial supply receiver
@@ -43,6 +49,7 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   constructor(
     string memory _name,
     string memory _symbol,
+    uint8 _decimals,
     address _factory,
     uint256 _initialSupply,
     address _receiver,
@@ -66,6 +73,7 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
     }
 
     FACTORY = _factory;
+    DECIMALS = _decimals;
   }
 
   /**
@@ -188,6 +196,13 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
       bridges[_bridge].burnerParams.timestamp,
       bridges[_bridge].burnerParams.ratePerSecond
     );
+  }
+
+  /**
+   * @dev Returns the number of decimals used to get its user representation.
+   */
+  function decimals() public view virtual override returns (uint8) {
+    return DECIMALS;
   }
 
   /**

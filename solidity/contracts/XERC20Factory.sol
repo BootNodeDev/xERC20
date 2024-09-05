@@ -30,6 +30,7 @@ contract XERC20Factory is IXERC20Factory {
    * @dev _limits and _minters must be the same length
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _decimals The number of decimals used to get its user representation
    * @param _minterLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of bridges that you are adding (optional, can be an empty array)
@@ -41,6 +42,7 @@ contract XERC20Factory is IXERC20Factory {
   function deployXERC20(
     string memory _name,
     string memory _symbol,
+    uint8 _decimals,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges,
@@ -48,7 +50,9 @@ contract XERC20Factory is IXERC20Factory {
     address _receiver,
     address _owner
   ) external returns (address _xerc20) {
-    _xerc20 = _deployXERC20(_name, _symbol, _minterLimits, _burnerLimits, _bridges, _initialSupply, _receiver, _owner);
+    _xerc20 = _deployXERC20(
+      _name, _symbol, _decimals, _minterLimits, _burnerLimits, _bridges, _initialSupply, _receiver, _owner
+    );
 
     emit XERC20Deployed(_xerc20);
   }
@@ -84,6 +88,7 @@ contract XERC20Factory is IXERC20Factory {
    * @dev _limits and _minters must be the same length
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _decimals The number of decimals used to get its user representation
    * @param _minterLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
@@ -95,6 +100,7 @@ contract XERC20Factory is IXERC20Factory {
   function _deployXERC20(
     string memory _name,
     string memory _symbol,
+    uint8 _decimals,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges,
@@ -118,7 +124,16 @@ contract XERC20Factory is IXERC20Factory {
     bytes memory _bytecode = abi.encodePacked(
       _creation,
       abi.encode(
-        _name, _symbol, address(this), _initialSupply, _receiver, _owner, _bridges, _minterLimits, _burnerLimits
+        _name,
+        _symbol,
+        _decimals,
+        address(this),
+        _initialSupply,
+        _receiver,
+        _owner,
+        _bridges,
+        _minterLimits,
+        _burnerLimits
       )
     );
 

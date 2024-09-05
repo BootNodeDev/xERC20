@@ -225,7 +225,7 @@ contract UnitDepositLessDecimals is Base {
 
   function setUp() public virtual override {
     _erc20 = IERC20(address(new MockERC206Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0, address(0), _owner, _bridges, _limits, _limits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _owner, 0, address(0), _owner, _bridges, _limits, _limits);
 
     vm.startPrank(_owner);
     _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
@@ -284,7 +284,7 @@ contract UnitDepositMoreDecimals is Base {
 
   function setUp() public virtual override {
     _erc20 = IERC20(address(new MockERC2020Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0, address(0), _owner, _bridges, _limits, _limits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _owner, 0, address(0), _owner, _bridges, _limits, _limits);
 
     vm.startPrank(_owner);
     _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
@@ -390,7 +390,7 @@ contract UnitWithdrawLessDecimals is Base {
 
   function setUp() public virtual override {
     _erc20 = IERC20(address(new MockERC206Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0, address(0), _owner, _bridges, _limits, _limits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _owner, 0, address(0), _owner, _bridges, _limits, _limits);
 
     deal(address(_erc20), _owner, type(uint192).max);
 
@@ -429,7 +429,7 @@ contract UnitWithdrawMoreDecimals is Base {
 
   function setUp() public virtual override {
     _erc20 = IERC20(address(new MockERC2020Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0, address(0), _owner, _bridges, _limits, _limits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _owner, 0, address(0), _owner, _bridges, _limits, _limits);
 
     deal(address(_erc20), _owner, type(uint256).max);
 
