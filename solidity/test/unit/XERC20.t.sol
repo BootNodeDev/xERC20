@@ -9,6 +9,7 @@ abstract contract Base is Test {
   address internal _owner = vm.addr(1);
   address internal _user = vm.addr(2);
   address internal _minter = vm.addr(3);
+  address internal _receiver = vm.addr(4);
 
   uint256 internal constant MAX_LIMIT = type(uint256).max / 2;
 
@@ -20,18 +21,29 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
+    _xerc20 = new XERC20('Test', 'TST', _owner, 0, address(0));
     vm.stopPrank();
   }
 }
 
 contract UnitDeploy is Base {
-  function testDeployment(uint256 _initialSupply) public {
-    _xerc20 = new XERC20('Test', 'TST', _owner, _initialSupply);
+  function testDeployment(
+    uint256 _initialSupply
+  ) public {
+    _xerc20 = new XERC20('Test', 'TST', _owner, _initialSupply, _receiver);
     assertEq(XERC20(_xerc20).name(), 'Test');
     assertEq(XERC20(_xerc20).symbol(), 'TST');
     assertEq(XERC20(_xerc20).owner(), _owner);
-    assertEq(XERC20(_xerc20).balanceOf(_owner), _initialSupply);
+    assertEq(XERC20(_xerc20).balanceOf(_receiver), _initialSupply);
+  }
+
+  function testDeployment_IXERC20_InvalidReceiver(
+    uint256 _initialSupply
+  ) public {
+    vm.assume(_initialSupply > 0);
+
+    vm.expectRevert(IXERC20.IXERC20_InvalidReceiver.selector);
+    _xerc20 = new XERC20('Test', 'TST', _owner, _initialSupply, address(0));
   }
 }
 
@@ -46,7 +58,9 @@ contract UnitNames is Base {
 }
 
 contract UnitMintBurn is Base {
-  function testMintRevertsIfNotApprove(uint256 _amount) public {
+  function testMintRevertsIfNotApprove(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.prank(_user);
     vm.expectRevert(IXERC20.IXERC20_NotHighEnoughLimits.selector);
@@ -80,7 +94,9 @@ contract UnitMintBurn is Base {
     vm.stopPrank();
   }
 
-  function testMint(uint256 _amount) public {
+  function testMint(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0 && _amount <= MAX_LIMIT);
 
     vm.prank(_owner);
@@ -91,7 +107,9 @@ contract UnitMintBurn is Base {
     assertEq(_xerc20.balanceOf(_minter), _amount);
   }
 
-  function testBurn(uint256 _amount) public {
+  function testBurn(
+    uint256 _amount
+  ) public {
     _amount = bound(_amount, 1, 1e40);
     vm.startPrank(_owner);
     _xerc20.setLimits(_user, _amount, _amount);
@@ -106,7 +124,9 @@ contract UnitMintBurn is Base {
     assertEq(_xerc20.balanceOf(_user), 0);
   }
 
-  function testBurnRevertsWithoutApproval(uint256 _amount) public {
+  function testBurnRevertsWithoutApproval(
+    uint256 _amount
+  ) public {
     _amount = bound(_amount, 1, 1e40);
 
     vm.prank(_owner);
@@ -252,7 +272,9 @@ contract UnitCreateParams is Base {
     _xerc20.setLimits(_minter, 0, _limit);
   }
 
-  function testSettingLimitsToUnapprovedUser(uint256 _amount) public {
+  function testSettingLimitsToUnapprovedUser(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0 && _amount <= MAX_LIMIT);
 
     vm.startPrank(_owner);
@@ -445,21 +467,27 @@ contract UnitCreateParams is Base {
     assertEq(_xerc20.burningCurrentLimitOf(_minter), 0);
   }
 
-  function testSetLockbox(address _lockbox) public {
+  function testSetLockbox(
+    address _lockbox
+  ) public {
     vm.prank(_owner);
     _xerc20.setLockbox(_lockbox);
 
     assertEq(_xerc20.lockbox(), _lockbox);
   }
 
-  function testSetLockboxEmitsEvents(address _lockbox) public {
+  function testSetLockboxEmitsEvents(
+    address _lockbox
+  ) public {
     vm.expectEmit(true, true, true, true);
     emit LockboxSet(_lockbox);
     vm.prank(_owner);
     _xerc20.setLockbox(_lockbox);
   }
 
-  function testLockboxDoesntNeedMinterRights(address _lockbox) public {
+  function testLockboxDoesntNeedMinterRights(
+    address _lockbox
+  ) public {
     vm.assume(_lockbox != address(0));
     vm.prank(_owner);
     _xerc20.setLockbox(_lockbox);
@@ -472,7 +500,9 @@ contract UnitCreateParams is Base {
     vm.stopPrank();
   }
 
-  function testRemoveBridge(uint256 _limit) public {
+  function testRemoveBridge(
+    uint256 _limit
+  ) public {
     vm.assume(_limit > 0 && _limit <= MAX_LIMIT);
 
     vm.startPrank(_owner);

@@ -12,7 +12,9 @@ contract DSTestFull is PRBTest {
    * @param _name Name of the label.
    * @return _address The address generated and labeled
    */
-  function _label(string memory _name) internal returns (address _address) {
+  function _label(
+    string memory _name
+  ) internal returns (address _address) {
     return _label(_newAddress(), _name);
   }
 
@@ -34,7 +36,9 @@ contract DSTestFull is PRBTest {
    * @param _name Label for the mock contract.
    * @return _address The address of the mock contract.
    */
-  function _mockContract(string memory _name) internal returns (address _address) {
+  function _mockContract(
+    string memory _name
+  ) internal returns (address _address) {
     return _mockContract(_newAddress(), _name);
   }
 

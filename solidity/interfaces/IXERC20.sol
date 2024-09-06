@@ -39,6 +39,11 @@ interface IXERC20 {
   error IXERC20_InvalidLength();
 
   /**
+   * @notice Reverts the receiver of the initial supply is invalid
+   */
+  error IXERC20_InvalidReceiver();
+
+  /**
    * @notice Contains the full minting and burning data for a particular bridge
    *
    * @param minterParams The minting parameters for the bridge
@@ -69,7 +74,9 @@ interface IXERC20 {
    *
    * @param _lockbox The address of the lockbox
    */
-  function setLockbox(address _lockbox) external;
+  function setLockbox(
+    address _lockbox
+  ) external;
 
   /**
    * @notice Updates the limits of any bridge
@@ -86,7 +93,9 @@ interface IXERC20 {
    * @param _minter The minter we are viewing the limits of
    *  @return _limit The limit the minter has
    */
-  function mintingMaxLimitOf(address _minter) external view returns (uint256 _limit);
+  function mintingMaxLimitOf(
+    address _minter
+  ) external view returns (uint256 _limit);
 
   /**
    * @notice Returns the max limit of a bridge
@@ -94,7 +103,9 @@ interface IXERC20 {
    * @param _bridge the bridge we are viewing the limits of
    * @return _limit The limit the bridge has
    */
-  function burningMaxLimitOf(address _bridge) external view returns (uint256 _limit);
+  function burningMaxLimitOf(
+    address _bridge
+  ) external view returns (uint256 _limit);
 
   /**
    * @notice Returns the current limit of a minter
@@ -102,7 +113,9 @@ interface IXERC20 {
    * @param _minter The minter we are viewing the limits of
    * @return _limit The limit the minter has
    */
-  function mintingCurrentLimitOf(address _minter) external view returns (uint256 _limit);
+  function mintingCurrentLimitOf(
+    address _minter
+  ) external view returns (uint256 _limit);
 
   /**
    * @notice Returns the current limit of a bridge
@@ -110,7 +123,9 @@ interface IXERC20 {
    * @param _bridge the bridge we are viewing the limits of
    * @return _limit The limit the bridge has
    */
-  function burningCurrentLimitOf(address _bridge) external view returns (uint256 _limit);
+  function burningCurrentLimitOf(
+    address _bridge
+  ) external view returns (uint256 _limit);
 
   /**
    * @notice Mints tokens for a user
