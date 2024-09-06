@@ -9,6 +9,7 @@ contract E2EDeployment is CommonE2EBase {
     assertEq(address(_xerc20.owner()), _owner);
     assertEq(_xerc20.name(), 'Dai Stablecoin');
     assertEq(_xerc20.symbol(), 'DAI');
+    assertEq(_xerc20.decimals(), 18);
     assertEq(_xerc20.FACTORY(), address(_xerc20Factory));
     assertEq(address(_lockbox.XERC20()), address(_xerc20));
     assertEq(address(_lockbox.ERC20()), address(_dai));
@@ -20,7 +21,8 @@ contract E2EDeployment is CommonE2EBase {
     uint256[] memory _limits = new uint256[](0);
     address[] memory _minters = new address[](0);
 
-    address _token = _xerc20Factory.deployXERC20('Test', 'TST', _limits, _limits, _minters, 0, address(0), address(0));
+    address _token =
+      _xerc20Factory.deployXERC20('Test', 'TST', 18, _limits, _limits, _minters, 0, address(0), address(0));
     address _lock = _xerc20Factory.deployLockbox(_token, address(_dai), false);
 
     assertEq(address(XERC20Lockbox(payable(_lock)).XERC20()), address(_token));

@@ -26,7 +26,7 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', _factory, 0, address(0), _owner, _bridges, _mintLimits, _burnLimits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _factory, 0, address(0), _owner, _bridges, _mintLimits, _burnLimits);
     vm.stopPrank();
   }
 }
@@ -35,7 +35,7 @@ contract UnitDeploy is Base {
   function testDeployment(
     uint256 _initialSupply
   ) public {
-    _xerc20 = new XERC20('Test', 'TST', _factory, _initialSupply, _receiver, _owner, _bridges, _mintLimits, _burnLimits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _factory, _initialSupply, _receiver, _owner, _bridges, _mintLimits, _burnLimits);
     assertEq(XERC20(_xerc20).name(), 'Test');
     assertEq(XERC20(_xerc20).symbol(), 'TST');
     assertEq(XERC20(_xerc20).owner(), _owner);
@@ -49,7 +49,7 @@ contract UnitDeploy is Base {
     _mintLimits.push(_mintLimit);
     _burnLimits.push(_burnLimit);
 
-    _xerc20 = new XERC20('Test', 'TST', _factory, _initialSupply, _receiver, _owner, _bridges, _mintLimits, _burnLimits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _factory, _initialSupply, _receiver, _owner, _bridges, _mintLimits, _burnLimits);
     assertEq(XERC20(_xerc20).name(), 'Test');
     assertEq(XERC20(_xerc20).symbol(), 'TST');
     assertEq(XERC20(_xerc20).owner(), _owner);
@@ -65,8 +65,7 @@ contract UnitDeploy is Base {
     vm.assume(_initialSupply > 0);
 
     vm.expectRevert(IXERC20.IXERC20_InvalidReceiver.selector);
-    _xerc20 =
-      new XERC20('Test', 'TST', _factory, _initialSupply, address(0), _owner, _bridges, _mintLimits, _burnLimits);
+    _xerc20 = new XERC20('Test', 'TST', 18, _factory, _initialSupply, address(0), _owner, _bridges, _mintLimits, _burnLimits);
   }
 }
 
