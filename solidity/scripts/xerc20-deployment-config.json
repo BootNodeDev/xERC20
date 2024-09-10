@@ -1,6 +1,7 @@
 {
     "name": "Test",
     "symbol": "TST",
+    "decimals": 18,
     "chainDetails": [
         {
             "rpcEnvName": "ETHEREUM_GOERLI_RPC",

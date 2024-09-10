@@ -42,6 +42,9 @@ abstract contract Base is Test {
   XERC20Lockbox internal _lockbox;
   XERC20Lockbox internal _nativeLockbox;
 
+  address[] internal _bridges;
+  uint256[] internal _limits;
+
   function setUp() public virtual {
     vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(18));
 
@@ -52,39 +55,10 @@ abstract contract Base is Test {
   }
 }
 
-contract UnitDecimals is Base {
-  function test_constructor_MaxDecimals() public {
-    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(uint8(36) + 1));
-
-    vm.expectRevert(IXERC20Lockbox.IXERC20Lockbox_MaxDecimals.selector);
-    new XERC20Lockbox(address(_xerc20), address(_erc20), false);
-  }
-
-  function test_constructor_erc20Decimals_native() public {
-    assertEq(_nativeLockbox.erc20Decimals(), 0);
-  }
-
-  function test_constructor_erc20Decimals_not_native_with_decimals(uint8 _erc20Decimals) public {
-    vm.assume(_erc20Decimals <= uint8(36));
-
-    vm.mockCall(address(_erc20), abi.encodeWithSelector(ERC20.decimals.selector), abi.encode(_erc20Decimals));
-
-    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
-
-    assertEq(_lockbox.erc20Decimals(), _erc20Decimals);
-  }
-
-  function test_constructor_erc20Decimals_not_native_no_decimals() public {
-    MockERC20NoDecimals erc20NoDecimals = new MockERC20NoDecimals();
-
-    _lockbox = new XERC20Lockbox(address(_xerc20), address(erc20NoDecimals), false);
-
-    assertEq(_lockbox.erc20Decimals(), 0);
-  }
-}
-
 contract UnitDeposit is Base {
-  function testDeposit(uint256 _amount) public {
+  function testDeposit(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.mockCall(
       address(_erc20),
@@ -100,7 +74,9 @@ contract UnitDeposit is Base {
     _lockbox.deposit(_amount);
   }
 
-  function testDepositTo(uint256 _amount) public {
+  function testDepositTo(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.mockCall(
       address(_erc20),
@@ -116,7 +92,9 @@ contract UnitDeposit is Base {
     _lockbox.depositTo(_user, _amount);
   }
 
-  function testDepositEmitsEvent(uint256 _amount) public {
+  function testDepositEmitsEvent(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.mockCall(
       address(_erc20),
@@ -131,7 +109,9 @@ contract UnitDeposit is Base {
     _lockbox.deposit(_amount);
   }
 
-  function testNonNativeIntoNativeDepositReverts(uint256 _amount) public {
+  function testNonNativeIntoNativeDepositReverts(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.prank(_owner);
@@ -139,7 +119,9 @@ contract UnitDeposit is Base {
     _lockbox.depositNative{value: _amount}();
   }
 
-  function testNonNativeIntoNativeDeposittoReverts(uint256 _amount) public {
+  function testNonNativeIntoNativeDeposittoReverts(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.prank(_owner);
@@ -147,7 +129,9 @@ contract UnitDeposit is Base {
     _lockbox.depositNativeTo{value: _amount}(_user);
   }
 
-  function testNativeRevertsIfDepositIntoNonNative(uint256 _amount) public {
+  function testNativeRevertsIfDepositIntoNonNative(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.prank(_owner);
@@ -155,7 +139,9 @@ contract UnitDeposit is Base {
     _nativeLockbox.deposit(_amount);
   }
 
-  function testNativeRevertsIfDepositToIntoNonNative(uint256 _amount) public {
+  function testNativeRevertsIfDepositToIntoNonNative(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.prank(_owner);
@@ -163,7 +149,9 @@ contract UnitDeposit is Base {
     _nativeLockbox.depositTo(_user, _amount);
   }
 
-  function testNativeDeposit(uint256 _amount) public {
+  function testNativeDeposit(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.prank(_owner);
@@ -173,7 +161,9 @@ contract UnitDeposit is Base {
     _nativeLockbox.depositNative{value: _amount}();
   }
 
-  function testNativeDepositTo(uint256 _amount) public {
+  function testNativeDepositTo(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.prank(_owner);
@@ -183,7 +173,9 @@ contract UnitDeposit is Base {
     _nativeLockbox.depositNativeTo{value: _amount}(_user);
   }
 
-  function testSendingNativeDepositByTransfer(uint256 _amount) public {
+  function testSendingNativeDepositByTransfer(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
     vm.mockCall(address(_xerc20), abi.encodeWithSelector(IXERC20.mint.selector, _owner, _amount), abi.encode(true));
@@ -195,107 +187,10 @@ contract UnitDeposit is Base {
   }
 }
 
-contract UnitDepositLessDecimals is Base {
-  uint256 decimalNormalizer = 10 ** 12;
-
-  function setUp() public virtual override {
-    _erc20 = IERC20(address(new MockERC206Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
-
-    vm.startPrank(_owner);
-    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
-    _xerc20.setLockbox(address(_lockbox));
-    vm.stopPrank();
-  }
-
-  function testDeposit(uint256 _amount) public {
-    vm.assume(_amount < type(uint192).max);
-    uint256 _amountNormalized = _amount * decimalNormalizer;
-
-    deal(address(_erc20), _user, _amount);
-
-    vm.startPrank(_user);
-    _erc20.approve(address(_lockbox), _amount);
-    _lockbox.deposit(_amount);
-    vm.stopPrank();
-
-    assertEq(_xerc20.balanceOf(_user), _amountNormalized);
-    assertEq(_erc20.balanceOf(_user), 0);
-  }
-
-  function testDepositTo(uint256 _amount) public {
-    vm.assume(_amount < type(uint192).max);
-    uint256 _amountNormalized = _amount * decimalNormalizer;
-
-    deal(address(_erc20), _user, _amount);
-
-    vm.startPrank(_user);
-    _erc20.approve(address(_lockbox), _amount);
-    _lockbox.depositTo(_owner, _amount);
-    vm.stopPrank();
-
-    assertEq(_xerc20.balanceOf(_owner), _amountNormalized);
-    assertEq(_erc20.balanceOf(_user), 0);
-  }
-
-  function testDepositRevertsAmountTooLarge() public {
-    uint256 bigAmount = uint256(type(uint192).max) + 1;
-    deal(address(_erc20), _user, bigAmount);
-
-    vm.startPrank(_user);
-    _erc20.approve(address(_lockbox), bigAmount);
-    vm.expectRevert(IXERC20Lockbox.IXERC20Lockbox_AmountTooLarge.selector);
-    _lockbox.depositTo(_owner, bigAmount);
-    vm.stopPrank();
-  }
-}
-
-contract UnitDepositMoreDecimals is Base {
-  uint256 decimalNormalizer = 10 ** 2;
-
-  function setUp() public virtual override {
-    _erc20 = IERC20(address(new MockERC2020Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
-
-    vm.startPrank(_owner);
-    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
-    _xerc20.setLockbox(address(_lockbox));
-    vm.stopPrank();
-  }
-
-  function testDeposit(uint256 _amount) public {
-    vm.assume(_amount < type(uint192).max);
-    uint256 _amountNormalized = _amount / decimalNormalizer;
-
-    deal(address(_erc20), _user, _amount);
-
-    vm.startPrank(_user);
-    _erc20.approve(address(_lockbox), _amount);
-    _lockbox.deposit(_amount);
-    vm.stopPrank();
-
-    assertEq(_xerc20.balanceOf(_user), _amountNormalized);
-    assertEq(_erc20.balanceOf(_user), 0);
-  }
-
-  function testDepositTo(uint256 _amount) public {
-    vm.assume(_amount < type(uint192).max);
-    uint256 _amountNormalized = _amount / decimalNormalizer;
-
-    deal(address(_erc20), _user, _amount);
-
-    vm.startPrank(_user);
-    _erc20.approve(address(_lockbox), _amount);
-    _lockbox.depositTo(_owner, _amount);
-    vm.stopPrank();
-
-    assertEq(_xerc20.balanceOf(_owner), _amountNormalized);
-    assertEq(_erc20.balanceOf(_user), 0);
-  }
-}
-
 contract UnitWithdraw is Base {
-  function testWithdraw(uint256 _amount) public {
+  function testWithdraw(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.mockCall(address(_xerc20), abi.encodeWithSelector(IXERC20.burn.selector, _owner, _amount), abi.encode(true));
     vm.mockCall(address(_erc20), abi.encodeWithSelector(IERC20.transfer.selector, _owner, _amount), abi.encode(true));
@@ -306,7 +201,9 @@ contract UnitWithdraw is Base {
     _lockbox.withdraw(_amount);
   }
 
-  function testWithdrawEmitsEvent(uint256 _amount) public {
+  function testWithdrawEmitsEvent(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.mockCall(address(_xerc20), abi.encodeWithSelector(IXERC20.burn.selector, _owner, _amount), abi.encode(true));
     vm.mockCall(address(_erc20), abi.encodeWithSelector(IERC20.transfer.selector, _owner, _amount), abi.encode(true));
@@ -317,7 +214,9 @@ contract UnitWithdraw is Base {
     _lockbox.withdraw(_amount);
   }
 
-  function testNativeWithdraw(uint256 _amount) public {
+  function testNativeWithdraw(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
 
@@ -330,7 +229,9 @@ contract UnitWithdraw is Base {
     assertEq(_owner.balance, _amount);
   }
 
-  function testNativeWithdrawTo(uint256 _amount) public {
+  function testNativeWithdrawTo(
+    uint256 _amount
+  ) public {
     vm.assume(_amount > 0);
     vm.deal(_owner, _amount);
 
@@ -341,79 +242,5 @@ contract UnitWithdraw is Base {
     vm.stopPrank();
 
     assertEq(_user.balance, _amount);
-  }
-}
-
-contract UnitWithdrawLessDecimals is Base {
-  uint256 decimalNormalizer = 10 ** 12;
-
-  function setUp() public virtual override {
-    _erc20 = IERC20(address(new MockERC206Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
-
-    deal(address(_erc20), _owner, type(uint192).max);
-
-    vm.startPrank(_owner);
-    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
-    _xerc20.setLockbox(address(_lockbox));
-    _erc20.approve(address(_lockbox), type(uint192).max);
-    _lockbox.deposit(type(uint192).max);
-    vm.stopPrank();
-  }
-
-  function testWithdraw(uint256 _amount) public {
-    vm.assume(_amount < type(uint192).max);
-    uint256 amountNormalized = _amount / decimalNormalizer;
-
-    vm.prank(_owner);
-    _xerc20.transfer(_user, _amount);
-
-    uint256 xer20BalanceBefore = _xerc20.balanceOf(_user);
-    uint256 er20BalanceBefore = _erc20.balanceOf(_user);
-
-    vm.startPrank(_user);
-    _xerc20.approve(address(_lockbox), _amount);
-    _lockbox.withdraw(_amount);
-    vm.stopPrank();
-
-    assertEq(_xerc20.balanceOf(_user), xer20BalanceBefore - _amount);
-    assertEq(_erc20.balanceOf(_user), er20BalanceBefore + amountNormalized);
-  }
-}
-
-contract UnitWithdrawMoreDecimals is Base {
-  uint256 decimalNormalizer = 10 ** 2;
-
-  function setUp() public virtual override {
-    _erc20 = IERC20(address(new MockERC2020Decimals()));
-    _xerc20 = new XERC20('Test', 'TST', _owner, 0);
-
-    deal(address(_erc20), _owner, type(uint256).max);
-
-    vm.startPrank(_owner);
-    _lockbox = new XERC20Lockbox(address(_xerc20), address(_erc20), false);
-    _xerc20.setLockbox(address(_lockbox));
-    _erc20.approve(address(_lockbox), type(uint256).max);
-    _lockbox.deposit(type(uint256).max);
-    vm.stopPrank();
-  }
-
-  function testWithdraw(uint256 _amount) public {
-    vm.assume(_amount < type(uint192).max);
-    uint256 amountNormalized = _amount * decimalNormalizer;
-
-    vm.prank(_owner);
-    _xerc20.transfer(_user, _amount);
-
-    uint256 xer20BalanceBefore = _xerc20.balanceOf(_user);
-    uint256 er20BalanceBefore = _erc20.balanceOf(_user);
-
-    vm.startPrank(_user);
-    _xerc20.approve(address(_lockbox), _amount);
-    _lockbox.withdraw(_amount);
-    vm.stopPrank();
-
-    assertEq(_xerc20.balanceOf(_user), xer20BalanceBefore - _amount);
-    assertEq(_erc20.balanceOf(_user), er20BalanceBefore + amountNormalized);
   }
 }
