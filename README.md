@@ -10,6 +10,11 @@ _XERC20Lockbox_: The lockbox works as a wrapper of an ERC20. It mints XERC20 tok
 
 _XERC20Factory_: The factory is used as a helper to deploy an xToken. It allows the owner to deploy the XERC20 and the Lockbox in one transaction while keeping the same token address on every chain used.
 
+### Audits
+
+- [Connext xTokens Audit](./audits/Connext_xTokens_Audit_-_Creed_-_v0.3.pdf)
+- [Bootnode xERC20 Launchpar - 09/2014](./audits/Bootnode_xERC20_Launchpad.pdf)
+
 ### Architectural Spec
 
 <img width="863" src="./assets/architectural-specs.png?raw=true">
@@ -74,7 +79,7 @@ In order to check your current code coverage, run:
 yarn coverage
 ```
 
-> **⚠ WARNING: Forge coverage is having some issues...**  
+> **⚠ WARNING: Forge coverage is having some issues...**
 > As stated in this [github issue](https://github.com/foundry-rs/foundry/issues/2165), checking the code coverage with Forge when using abstract contract is not currently working.
 
 <br>
@@ -134,7 +139,7 @@ Decide on which blockchains you want to deploy your token and the initial config
     "chainDetails": [ // The chains that the xERC20 token will be deployed to.
         {
             "rpcEnvName": "ETHEREUM_GOERLI_RPC", // The name of the RPC to use. It should be added in the .env file.
-            "erc20": "0x0000000000000000000000000000000000000001", // The address of the canonical token representation for that chain. A lockbox will be deployed pairing the deployed xERC20 with the specified ERC20 1:1. address(0) in case there is non. 
+            "erc20": "0x0000000000000000000000000000000000000001", // The address of the canonical token representation for that chain. A lockbox will be deployed pairing the deployed xERC20 with the specified ERC20 1:1. address(0) in case there is non.
             "governor": "0x0000000000000000000000000000000000000002", // The owner of the xERC20.
             "isNativeGasToken": false, // True if the ERC20 token is the native gas token of the chain. Ex: ETH for ethereum or MATIC for polygon.
             "bridgeDetails": [ // The bridges to be configured for the xERC20 token on this particular chain.
