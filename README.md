@@ -13,7 +13,7 @@ _XERC20Factory_: The factory is used as a helper to deploy an xToken. It allows 
 ### Audits
 
 - [Connext xTokens Audit](./audits/Connext_xTokens_Audit_-_Creed_-_v0.3.pdf)
-- [Bootnode xERC20 Launchpar - 09/2014](./audits/Bootnode_xERC20_Launchpad.pdf)
+- [BootNode xERC20 Launchpad - 09/2014](./audits/Bootnode_xERC20_Launchpad.pdf)
 
 ### Architectural Spec
 
