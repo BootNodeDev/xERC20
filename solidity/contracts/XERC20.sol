@@ -28,15 +28,52 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   mapping(address => Bridge) public bridges;
 
   /**
+   * @dev The number of decimals used to get its user representation.
+   */
+  uint8 private immutable DECIMALS;
+
+  /**
    * @notice Constructs the initial config of the XERC20
    *
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _decimals The number of decimals used to get its user representation
    * @param _factory The factory which deployed this contract
+   * @param _initialSupply The initial supply of the token
+   * @param _receiver The initial supply receiver
+   * @param _owner The owner of the token, zero address if the owner is the sender
+   * @param _bridges The address of the bridge we are setting the limits to
+   * @param _mintingLimits The updated minting limit we are setting to the bridge
+   * @param _burningLimits The updated burning limit we are setting to the bridge
    */
-  constructor(string memory _name, string memory _symbol, address _factory) ERC20(_name, _symbol) ERC20Permit(_name) {
-    _transferOwnership(_factory);
+  constructor(
+    string memory _name,
+    string memory _symbol,
+    uint8 _decimals,
+    address _factory,
+    uint256 _initialSupply,
+    address _receiver,
+    address _owner,
+    address[] memory _bridges,
+    uint256[] memory _mintingLimits,
+    uint256[] memory _burningLimits
+  ) ERC20(_name, _symbol) ERC20Permit(_name) {
+    _transferOwnership(_owner == address(0) ? msg.sender : _owner);
+
+    if (_initialSupply > 0) {
+      if (_receiver == address(0)) {
+        revert IXERC20_InvalidReceiver();
+      }
+
+      _mint(_receiver, _initialSupply);
+    }
+
+    if (_bridges.length > 0) {
+      _setLimitsBatch(_bridges, _mintingLimits, _burningLimits);
+    }
+
     FACTORY = _factory;
+    DECIMALS = _decimals;
   }
 
   /**
@@ -68,7 +105,9 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    *
    * @param _lockbox The address of the lockbox
    */
-  function setLockbox(address _lockbox) public {
+  function setLockbox(
+    address _lockbox
+  ) public {
     if (msg.sender != FACTORY) revert IXERC20_NotFactory();
     lockbox = _lockbox;
 
@@ -78,18 +117,27 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   /**
    * @notice Updates the limits of any bridge
    * @dev Can only be called by the owner
+   * @param _bridge The address of the bridge we are setting the limits to
    * @param _mintingLimit The updated minting limit we are setting to the bridge
    * @param _burningLimit The updated burning limit we are setting to the bridge
-   * @param _bridge The address of the bridge we are setting the limits too
    */
   function setLimits(address _bridge, uint256 _mintingLimit, uint256 _burningLimit) external onlyOwner {
-    if (_mintingLimit > (type(uint256).max / 2) || _burningLimit > (type(uint256).max / 2)) {
-      revert IXERC20_LimitsTooHigh();
-    }
+    _setLimits(_bridge, _mintingLimit, _burningLimit);
+  }
 
-    _changeMinterLimit(_bridge, _mintingLimit);
-    _changeBurnerLimit(_bridge, _burningLimit);
-    emit BridgeLimitsSet(_mintingLimit, _burningLimit, _bridge);
+  /**
+   * @notice Updates the limits of many bridges
+   * @dev Can only be called by the owner
+   * @param _bridges The address of the bridge we are setting the limits to
+   * @param _mintingLimits The updated minting limit we are setting to the bridge
+   * @param _burningLimits The updated burning limit we are setting to the bridge
+   */
+  function setLimitsBatch(
+    address[] memory _bridges,
+    uint256[] memory _mintingLimits,
+    uint256[] memory _burningLimits
+  ) external onlyOwner {
+    _setLimitsBatch(_bridges, _mintingLimits, _burningLimits);
   }
 
   /**
@@ -98,7 +146,9 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _bridge the bridge we are viewing the limits of
    * @return _limit The limit the bridge has
    */
-  function mintingMaxLimitOf(address _bridge) public view returns (uint256 _limit) {
+  function mintingMaxLimitOf(
+    address _bridge
+  ) public view returns (uint256 _limit) {
     _limit = bridges[_bridge].minterParams.maxLimit;
   }
 
@@ -108,7 +158,9 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _bridge the bridge we are viewing the limits of
    * @return _limit The limit the bridge has
    */
-  function burningMaxLimitOf(address _bridge) public view returns (uint256 _limit) {
+  function burningMaxLimitOf(
+    address _bridge
+  ) public view returns (uint256 _limit) {
     _limit = bridges[_bridge].burnerParams.maxLimit;
   }
 
@@ -118,7 +170,9 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _bridge the bridge we are viewing the limits of
    * @return _limit The limit the bridge has
    */
-  function mintingCurrentLimitOf(address _bridge) public view returns (uint256 _limit) {
+  function mintingCurrentLimitOf(
+    address _bridge
+  ) public view returns (uint256 _limit) {
     _limit = _getCurrentLimit(
       bridges[_bridge].minterParams.currentLimit,
       bridges[_bridge].minterParams.maxLimit,
@@ -133,13 +187,58 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _bridge the bridge we are viewing the limits of
    * @return _limit The limit the bridge has
    */
-  function burningCurrentLimitOf(address _bridge) public view returns (uint256 _limit) {
+  function burningCurrentLimitOf(
+    address _bridge
+  ) public view returns (uint256 _limit) {
     _limit = _getCurrentLimit(
       bridges[_bridge].burnerParams.currentLimit,
       bridges[_bridge].burnerParams.maxLimit,
       bridges[_bridge].burnerParams.timestamp,
       bridges[_bridge].burnerParams.ratePerSecond
     );
+  }
+
+  /**
+   * @dev Returns the number of decimals used to get its user representation.
+   */
+  function decimals() public view virtual override returns (uint8) {
+    return DECIMALS;
+  }
+
+  /**
+   * @notice Updates the limits of any bridge
+   * @param _mintingLimit The updated minting limit we are setting to the bridge
+   * @param _burningLimit The updated burning limit we are setting to the bridge
+   * @param _bridge The address of the bridge we are setting the limits too
+   */
+  function _setLimits(address _bridge, uint256 _mintingLimit, uint256 _burningLimit) internal {
+    if (_mintingLimit > (type(uint256).max / 2) || _burningLimit > (type(uint256).max / 2)) {
+      revert IXERC20_LimitsTooHigh();
+    }
+
+    _changeMinterLimit(_bridge, _mintingLimit);
+    _changeBurnerLimit(_bridge, _burningLimit);
+    emit BridgeLimitsSet(_mintingLimit, _burningLimit, _bridge);
+  }
+
+  /**
+   * @notice Updates the limits of many bridges
+   * @dev Can only be called by the owner
+   * @param _bridges The address of the bridge we are setting the limits to
+   * @param _mintingLimits The updated minting limit we are setting to the bridge
+   * @param _burningLimits The updated burning limit we are setting to the bridge
+   */
+  function _setLimitsBatch(
+    address[] memory _bridges,
+    uint256[] memory _mintingLimits,
+    uint256[] memory _burningLimits
+  ) internal {
+    if (_bridges.length != _mintingLimits.length || _bridges.length != _burningLimits.length) {
+      revert IXERC20_InvalidLength();
+    }
+    for (uint256 _i = 0; _i < _bridges.length; _i++) {
+      _setLimits(_bridges[_i], _mintingLimits[_i], _burningLimits[_i]);
+    }
   }
 
   /**
