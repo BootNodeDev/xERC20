@@ -31,3 +31,22 @@ fuzz_runs = 5000
 src = 'solidity/test'
 fs_permissions = [{ access = "read-write", path = "./"}]
 
+[rpc_endpoints]
+  mainnet = "${ETHEREUM_MAINNET_RPC}"
+  optimism = "${OPTIMISM_RPC_URL}"
+  arbitrum = "${ARBITRUM_RPC_URL}"
+  base = "${BASE_RPC_URL}"
+  sepolia = "${SEPOLIA_RPC_URL}"
+  arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
+  base-sepolia = "${BASE_SEPOLIA_RPC_URL}"
+  optimism-sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
+
+[etherscan]
+  mainnet = { key = "${API_KEY_ETHERSCAN}" }
+  arbitrum = { key = "${API_KEY_ARBISCAN}", url = "https://api.arbiscan.io/api" }
+  base = { key = "${API_KEY_BASESCAN}", url = "https://api.basescan.org/api" }
+  optimism = { key = "${API_KEY_OPTISCAN}", url = "https://api-optimistic.etherscan.io/api" }
+  sepolia = { key = "${API_KEY_ETHERSCAN}" }
+  arbitrum-sepolia = { key = "${API_KEY_ARBISCAN}", url = "https://api-sepolia.arbiscan.io/api" }
+  base-sepolia = { key = "${API_KEY_BASESCAN}", url = "https://api-sepolia.basescan.org/api" }
+  optimism-sepolia = { key = "${API_KEY_OPTISCAN}", url = "https://api-sepolia-optimistic.etherscan.io/api" }

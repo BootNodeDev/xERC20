@@ -10,13 +10,13 @@ import {ScriptingLibrary} from './ScriptingLibrary/ScriptingLibrary.sol';
 contract XERC20FactoryDeploy is Script, ScriptingLibrary {
   ////////////////////////// MODIFY ////////////////////////////////
   // When new factories need to be deployed, make sure to update the salt version to avoid address collition
-  string public constant SALT = 'xERC20-v2.0';
+  string public constant SALT = 'xERC20-v2.1';
   //////////////////////////////////////////////////////////////////
 
   uint256 public deployerPk = vm.envUint('DEPLOYER_PRIVATE_KEY');
 
   function run() public {
-    bytes32 _salt = keccak256(abi.encodePacked(SALT, msg.sender));
+    bytes32 _salt = keccak256(abi.encodePacked(SALT, vm.addr(deployerPk)));
 
     vm.startBroadcast(deployerPk);
     XERC20Factory _factory = new XERC20Factory{salt: _salt}();
