@@ -12,6 +12,7 @@ for network in binance polygon blast gnosis; do
     echo "\nDeploying to $network..."
     forge script $SCRIPT_PATH \
         --broadcast \
+        --legacy \
         $VERBOSITY \
         --via-ir \
         --slow \
