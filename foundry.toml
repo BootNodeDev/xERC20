@@ -1,52 +1,62 @@
 [fmt]
-line_length = 120
-tab_width = 2
 bracket_spacing = false
+fs_permissions = [{access = "read-write", path = "./"}]
 int_types = 'long'
-quote_style = 'single'
-number_underscore = 'thousands'
+line_length = 120
 multiline_func_header = 'params_first'
-fs_permissions = [{ access = "read-write", path = "./"}]
+number_underscore = 'thousands'
+quote_style = 'single'
+tab_width = 2
 
 [profile.default]
+fs_permissions = [{access = "read-write", path = "./"}]
+fuzz_runs = 1000
+libs = ['lib']
+optimizer_runs = 10_000
+out = 'out'
 solc = '0.8.23'
 src = 'solidity'
 test = 'solidity/test'
-out = 'out'
-libs = ['lib']
-fuzz_runs = 1000
-optimizer_runs = 10_000
-fs_permissions = [{ access = "read-write", path = "./"}]
 
 [profile.optimized]
-via_ir = true
-out = 'out-via-ir'
+fs_permissions = [{access = "read-write", path = "./"}]
 fuzz_runs = 5000
-fs_permissions = [{ access = "read-write", path = "./"}]
+out = 'out-via-ir'
+via_ir = true
 
 [profile.test]
-via_ir = true
-out = 'out-via-ir'
+fs_permissions = [{access = "read-write", path = "./"}]
 fuzz_runs = 5000
+out = 'out-via-ir'
 src = 'solidity/test'
-fs_permissions = [{ access = "read-write", path = "./"}]
+via_ir = true
 
 [rpc_endpoints]
-  mainnet = "${ETHEREUM_MAINNET_RPC}"
-  optimism = "${OPTIMISM_RPC_URL}"
-  arbitrum = "${ARBITRUM_RPC_URL}"
-  base = "${BASE_RPC_URL}"
-  sepolia = "${SEPOLIA_RPC_URL}"
-  arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
-  base-sepolia = "${BASE_SEPOLIA_RPC_URL}"
-  optimism-sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
+arbitrum = "${ARBITRUM_MAINNET_RPC}"
+base = "${BASE_MAINNET_RPC}"
+binance = "${BINANCE_MAINNET_RPC}"
+blast = "${BLAST_MAINNET_RPC}"
+gnosis = "${GNOSIS_MAINNET_RPC}"
+mainnet = "${ETHEREUM_MAINNET_RPC}"
+optimism = "${OPTIMISM_MAINNET_RPC}"
+polygon = "${POLYGON_MAINNET_RPC}"
+
+arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
+base-sepolia = "${BASE_SEPOLIA_RPC}"
+optimism-sepolia = "${OPTIMISM_SEPOLIA_RPC}"
+sepolia = "${ETHEREUM_SEPOLIA_RPC}"
 
 [etherscan]
-  mainnet = { key = "${API_KEY_ETHERSCAN}" }
-  arbitrum = { key = "${API_KEY_ARBISCAN}", url = "https://api.arbiscan.io/api" }
-  base = { key = "${API_KEY_BASESCAN}", url = "https://api.basescan.org/api" }
-  optimism = { key = "${API_KEY_OPTISCAN}", url = "https://api-optimistic.etherscan.io/api" }
-  sepolia = { key = "${API_KEY_ETHERSCAN}" }
-  arbitrum-sepolia = { key = "${API_KEY_ARBISCAN}", url = "https://api-sepolia.arbiscan.io/api" }
-  base-sepolia = { key = "${API_KEY_BASESCAN}", url = "https://api-sepolia.basescan.org/api" }
-  optimism-sepolia = { key = "${API_KEY_OPTISCAN}", url = "https://api-sepolia-optimistic.etherscan.io/api" }
+arbitrum = {key = "${API_KEY_ARBISCAN}", url = "https://api.arbiscan.io/api"}
+base = {key = "${API_KEY_BASESCAN}", url = "https://api.basescan.org/api"}
+binance = {key = "${API_KEY_BSCSCAN}", url = "https://api.bscscan.com/api"}
+blast = {key = "${API_KEY_BLASTSCAN}", url = "https://api.blastscan.io/api"}
+gnosis = {key = "${API_KEY_GNOSISSCAN}", url = "https://api.gnosisscan.io/api"}
+mainnet = {key = "${API_KEY_ETHERSCAN}"}
+optimism = {key = "${API_KEY_OPTISCAN}", url = "https://api-optimistic.etherscan.io/api"}
+polygon = {key = "${API_KEY_POLSCAN}", url = "https://api.polygonscan.com/api"}
+
+arbitrum-sepolia = {key = "${API_KEY_ARBISCAN}", url = "https://api-sepolia.arbiscan.io/api"}
+base-sepolia = {key = "${API_KEY_BASESCAN}", url = "https://api-sepolia.basescan.org/api"}
+optimism-sepolia = {key = "${API_KEY_OPTISCAN}", url = "https://api-sepolia-optimistic.etherscan.io/api"}
+sepolia = {key = "${API_KEY_ETHERSCAN}"}
