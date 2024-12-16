@@ -20,3 +20,4 @@ out/*/*
 # Keep the latest deployment only
 broadcast/**
 !broadcast/**/run-latest.json
+.pnotes/
