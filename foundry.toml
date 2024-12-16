@@ -17,6 +17,7 @@ out = 'out'
 solc = '0.8.23'
 src = 'solidity'
 test = 'solidity/test'
+evm_version = "paris"
 
 [profile.optimized]
 fs_permissions = [{access = "read-write", path = "./"}]
